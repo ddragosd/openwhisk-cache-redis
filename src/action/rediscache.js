@@ -19,13 +19,13 @@ function main(params) {
       _fail_on_missing("redis_host", params, reject);
       _fail_on_missing("key", params, reject);
 
-      if (process.env.__redis_client !== null) {
+      if (process.env.__redis_client !== null && typeof(process.env.__redis_client) !== "undefined") {
         redis = require(process.env.__redis_client);
       }
       let redis_client = redis.createClient(params.redis_host,
         {
           //A string used to prefix all used keys (e.g. namespace:test)
-          prefix: crypto.createHash('md5').update(process.env.__OW_API_KEY).digest('hex'),
+          prefix: crypto.createHash('md5').update(process.env.__OW_API_KEY || "local").digest('hex') + ":",
           password: params.redis_auth
         });
 
