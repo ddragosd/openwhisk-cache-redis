@@ -32,7 +32,8 @@ wsk action invoke cache/redis --param key my:first:key --param value hello-world
 ```
 
 * `key` parameter is a string used as the Redis key
-* `value` parameter is a string or an object. If it's an object, the action assumes it's a dictionary with `<key,value>` pairs to be stored as a hash map in Redis, with each value being a string.
+* `value` parameter is a string or an object.
+  * `(Not Implemented Yet)`. If it's an object, the action assumes it's a dictionary with `<key,value>` pairs to be stored as a hash map in Redis, with each value being a string.
 
 #### Reading cached key,value pairs
 
@@ -41,4 +42,4 @@ wsk action invoke cache/redis --param key my:first:key --param fields field1,fie
 ```
 
 * `key` parameter is a string used as the Redis key
-* `fields` parameter is used to retrieve only a subset of the values associated with the key, in case the value saved originally was a dictionary of `<key,value>` pairs.
+* `(Not Implemented Yet)`. `fields` parameter is used to retrieve only a subset of the values associated with the key, in case the value saved originally was a dictionary of `<key,value>` pairs.
