@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const redis = require("redis-mock");
+var redis = require('redis');
 
 function _fail_on_missing(param_name,params,reject) {
   if(params[param_name] == null || typeof(params[param_name]) == "undefined"){
@@ -18,6 +18,10 @@ function main(params) {
     return new Promise( (resolve, reject) => {
       _fail_on_missing("redis_host", params, reject);
       _fail_on_missing("key", params, reject);
+
+      if (process.env.__redis_client !== null) {
+        redis = require(process.env.__redis_client);
+      }
       let redis_client = redis.createClient(params.redis_host,
         {
           //A string used to prefix all used keys (e.g. namespace:test)
