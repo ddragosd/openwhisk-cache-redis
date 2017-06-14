@@ -22,8 +22,8 @@ $ wsk action create cache/redis ./openwhisk-cache-redis-0.0.1.js \
 
 * `redis_host` - Redis hostname
 * `redis_auth` - Redis authentication
-* `max_ttl` - default Redis TTL for each key
-* `encrypt` - specifies whether the action should encrypt the values
+* `(Not Implemented Yet)`.`max_ttl` - default Redis TTL for each key
+* `(Not Implemented Yet)`.`encrypt` - specifies whether the action should encrypt the values
 
 #### Caching key,value pairs
 
@@ -33,7 +33,7 @@ wsk action invoke cache/redis --param key my:first:key --param value hello-world
 
 * `key` parameter is a string used as the Redis key
 * `value` parameter is a string or an object.
-  * `(Not Implemented Yet)`. If it's an object, the action assumes it's a dictionary with `<key,value>` pairs to be stored as a hash map in Redis, with each value being a string.
+  *  If it's an object, the action assumes it's a dictionary with `<key,value>` pairs to be stored as a hash map in Redis, with each value being a string.
 
 #### Reading cached key,value pairs
 
@@ -42,4 +42,4 @@ wsk action invoke cache/redis --param key my:first:key --param fields field1,fie
 ```
 
 * `key` parameter is a string used as the Redis key
-* `(Not Implemented Yet)`. `fields` parameter is used to retrieve only a subset of the values associated with the key, in case the value saved originally was a dictionary of `<key,value>` pairs.
+* `fields` parameter is used to retrieve only a subset of the values associated with the key, in case the value saved originally was a dictionary. I.e for the saved value of `{"a":1, "b":2, "c":3}`, if `fields=a,c`, then the response contains only `{"a":1, "c":3}`  
