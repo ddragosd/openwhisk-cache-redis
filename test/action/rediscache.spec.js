@@ -16,7 +16,8 @@ describe('RedisCache', () => {
       let params = {
         redis_host: "test",
         key: "foo",
-        value: "bar"
+        value: "bar",
+        context: "c"
       };
       process.env.__OW_API_KEY = "test";
       process.env.__redis_client = "fakeredis";
@@ -25,14 +26,15 @@ describe('RedisCache', () => {
       result.should.eventually.deep.equal({
         key: params.key,
         value: params.value,
-        context: null
+        context: "c"
       }).notify(done);
     });
 
     it('should read the key value pairs correctly', (done) => {
       let params = {
         redis_host: "test",
-        key: "foo"
+        key: "foo",
+        context: "ccc"
       };
       process.env.__OW_API_KEY = "test";
       process.env.__redis_client = "fakeredis";
@@ -41,7 +43,7 @@ describe('RedisCache', () => {
       result.should.eventually.deep.equal({
         key: params.key,
         value: "bar",
-        context: null
+        context: "ccc"
       }).notify(done);
     });
 
