@@ -35,7 +35,8 @@ function _set_handler(params, resolve, reject, redis_client) {
     console.log("Redis response:" + response);
     resolve({
       key: key,
-      value: params.value
+      value: params.value,
+      context: params.context || null
     })
   });
   // TODO: what if value is an array ?
@@ -74,7 +75,8 @@ function _get_handler(params, resolve, reject, redis_client) {
 
     resolve({
       key: key,
-      value: response
+      value: response,
+      context: params.context || null
     });
   }
 

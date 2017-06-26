@@ -24,7 +24,8 @@ describe('RedisCache', () => {
       let result = action(params);
       result.should.eventually.deep.equal({
         key: params.key,
-        value: params.value
+        value: params.value,
+        context: null
       }).notify(done);
     });
 
@@ -39,7 +40,8 @@ describe('RedisCache', () => {
       let result = action(params);
       result.should.eventually.deep.equal({
         key: params.key,
-        value: "bar"
+        value: "bar",
+        context: null
       }).notify(done);
     });
 
@@ -62,7 +64,8 @@ describe('RedisCache', () => {
       let result = action(params);
       result.should.eventually.deep.equal({
         key: params.key,
-        value: params.value
+        value: params.value,
+        context: null
       }).notify(done);
     });
 
@@ -80,7 +83,8 @@ describe('RedisCache', () => {
         value: {
           "one": "1",
           "two": "2"
-        }
+        },
+        context:  null
       }).notify(done);
     });
 
@@ -98,7 +102,8 @@ describe('RedisCache', () => {
         key: params.key,
         value: {
           "one": "1"
-        }
+        },
+        context: null
       }).notify(done);
     });
 
@@ -118,7 +123,8 @@ describe('RedisCache', () => {
           "one": "1",
           "two": "2",
           "three": null
-        }
+        },
+        context: null
       }).notify(done);
     });
 
@@ -138,7 +144,8 @@ describe('RedisCache', () => {
       let result = action(params);
       result.should.eventually.deep.equal({
         key: params.key,
-        value: null
+        value: null,
+        context: null
       }).notify(done);
     });
 

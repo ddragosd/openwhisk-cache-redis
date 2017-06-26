@@ -5643,14 +5643,95 @@ module.exports = {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var crypto = require('crypto');
 var redis = require('redis');
+
+// default field is used to adapt a SET into a HSET in Redis
+// by convention, this action uses only hashes, to achieve an easier API and impl
+var DEFAULT_FIELD = "_default_";
 
 function _fail_on_missing(param_name, params, reject) {
   if (params[param_name] == null || typeof params[param_name] == "undefined") {
     reject({
       "message": "Parameter " + param_name + " is required."
     });
+    return true;
+  }
+}
+
+function _set_handler(params, resolve, reject, redis_client) {
+  var key = params.key;
+  var value = params.value;
+  if (typeof value == "string" || typeof value == "number") {
+    // wrap the value into an object to be used with hmset
+    value = _defineProperty({}, DEFAULT_FIELD, value);
+  }
+
+  redis_client.hmset(key, value, function (err, response) {
+    if (err !== null && typeof err !== "undefined") {
+      console.error(err);
+      reject({
+        error: err.toString(),
+        type: "redis_hmset"
+      });
+    }
+    console.log("Redis response:" + response);
+    resolve({
+      key: key,
+      value: params.value,
+      context: params.context || null
+    });
+  });
+  // TODO: what if value is an array ?
+}
+
+function _get_handler(params, resolve, reject, redis_client) {
+  var key = params.key;
+  var value = params.value;
+  var get_redis_handler = function get_redis_handler(err, response) {
+    if (err !== null && typeof err !== "undefined") {
+      console.error(err);
+      reject({
+        error: err.toString(),
+        type: "redis_hmget"
+      });
+    }
+    console.log("Redis response:" + JSON.stringify(response));
+
+    // if the response is an array and params.fields is not null, match fields with response
+    if (response !== null && response.constructor == Array) {
+      var fields_array = params.fields.split(",");
+      var response_object = {};
+      for (var i = 0; i < fields_array.length; i++) {
+        response_object[fields_array[i]] = response[i];
+      }
+      response = response_object;
+    }
+
+    // response is null when the key is missing
+
+    if (response !== null && (typeof response === 'undefined' ? 'undefined' : _typeof(response)) == "object") {
+      if (response[DEFAULT_FIELD] !== null && typeof response[DEFAULT_FIELD] !== "undefined") {
+        response = response[DEFAULT_FIELD];
+      }
+    }
+
+    resolve({
+      key: key,
+      value: response,
+      context: params.context || null
+    });
+  };
+
+  if (params.fields == null) {
+    redis_client.hgetall(key, get_redis_handler);
+  } else {
+    redis_client.hmget(key, params.fields.split(","), get_redis_handler);
   }
 }
 
@@ -5661,12 +5742,14 @@ function _fail_on_missing(param_name, params, reject) {
  */
 function main(params) {
   return new Promise(function (resolve, reject) {
-    _fail_on_missing("redis_host", params, reject);
-    _fail_on_missing("key", params, reject);
+    if (_fail_on_missing("redis_host", params, reject) || _fail_on_missing("key", params, reject)) {
+      return;
+    }
 
     if (process.env.__redis_client !== null && typeof process.env.__redis_client !== "undefined") {
       redis = require(process.env.__redis_client);
     }
+
     var redis_client = redis.createClient(params.redis_host, {
       //A string used to prefix all used keys (e.g. namespace:test)
       prefix: crypto.createHash('md5').update(process.env.__OW_API_KEY || "local").digest('hex') + ":",
@@ -5681,52 +5764,14 @@ function main(params) {
       });
     });
 
-    var key = params.key;
-    var value = params.value;
-    if (value !== null && typeof value !== "undefined") {
-      console.log("SET key:" + key);
+    if (params.value !== null && typeof params.value !== "undefined") {
+      _set_handler(params, resolve, reject, redis_client);
       // TODO: handle timeouts
-      // TODO: handle cases when value is an object
-      redis_client.set(key, value, function (err, response) {
-        if (err !== null && typeof err !== "undefined") {
-          console.error(err);
-          reject({
-            error: err.toString(),
-            type: "redis_set"
-          });
-        }
-        console.log("Redis response:" + response);
-        resolve({
-          key: key,
-          value: value
-        });
-      });
-    } else {
-      // GET values from cache
-      console.log("GET key:" + key);
-      redis_client.get(key, function (err, response) {
-        if (err !== null && typeof err !== "undefined") {
-          console.error(err);
-          reject({
-            error: err.toString(),
-            type: "redis_get"
-          });
-        }
-        console.log("Redis response:" + response);
-        // response is null when the key is missing
-        value = response;
-        resolve({
-          key: key,
-          value: value
-        });
-      });
+      return;
     }
-
-    // console.log(params);
-    // resolve({
-    //   event: params,
-    //   env: process.env
-    // });
+    // GET values from cache
+    console.log("GET key:" + params.key);
+    _get_handler(params, resolve, reject, redis_client);
   });
 }
 
@@ -5734,4 +5779,3 @@ exports.default = main;
 
 },{"crypto":undefined,"redis":12}]},{},[]);
 var main = require('main-action').default;
-exports.main=main;
