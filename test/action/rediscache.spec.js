@@ -49,6 +49,45 @@ describe('RedisCache', () => {
 
   });
 
+  describe('with boolean value', () => {
+
+    it('should save the key value pairs correctly', (done) => {
+      let params = {
+        redis_host: "test",
+        key: "foo_boolean",
+        value: true,
+        context: "c"
+      };
+      process.env.__OW_API_KEY = "test";
+      process.env.__redis_client = "fakeredis";
+
+      let result = action(params);
+      result.should.eventually.deep.equal({
+        key: params.key,
+        value: params.value,
+        context: "c"
+      }).notify(done);
+    });
+
+    it('should read the key value pairs correctly', (done) => {
+      let params = {
+        redis_host: "test",
+        key: "foo_boolean",
+        context: "ccc"
+      };
+      process.env.__OW_API_KEY = "test";
+      process.env.__redis_client = "fakeredis";
+
+      let result = action(params);
+      result.should.eventually.deep.equal({
+        key: params.key,
+        value: "true",
+        context: "ccc"
+      }).notify(done);
+    });
+
+  });
+
   describe('with a complex value', () => {
 
     it('should save the complex value correctly', (done) => {

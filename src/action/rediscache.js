@@ -17,10 +17,10 @@ function _fail_on_missing(param_name, params, reject) {
 function _set_handler(params, resolve, reject, redis_client) {
   let key = params.key;
   let value = params.value;
-  if (typeof(value) == "string" || typeof(value) == "number") {
+  if (typeof(value) == "string" || typeof(value) == "number" || typeof(value) == "boolean") {
     // wrap the value into an object to be used with hmset
     value = {
-      [DEFAULT_FIELD]: value
+      [DEFAULT_FIELD]: value.toString()
     }
   }
 
