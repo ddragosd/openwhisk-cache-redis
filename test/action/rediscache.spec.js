@@ -88,6 +88,75 @@ describe('RedisCache', () => {
 
   });
 
+
+  describe('with multiple items', () => {
+
+    it('should save ALL key value pairs correctly', (done) => {
+      let params = {
+        redis_host: "test",
+        items: [{
+            key: "key-1",
+            value: "value-1"
+          },
+          {
+            key: "key-2",
+            value: "value-2"
+          }
+        ]
+      };
+      process.env.__OW_API_KEY = "test";
+      process.env.__redis_client = "fakeredis";
+
+      console.log("Invoking action with params:" + JSON.stringify(params));
+
+      let result = action(params);
+      result.should.eventually.deep.equal({
+        items: [{
+            key: params.items[0].key,
+            value: params.items[0].value
+          },
+          {
+            key: params.items[1].key,
+            value: params.items[1].value
+          }
+        ],
+      }).notify(done);
+    });
+
+    it('should read ALL key value pairs correctly', (done) => {
+      let params = {
+        redis_host: "test",
+        items: [{
+            key: "key-1",
+            value: "value-1"
+          },
+          {
+            key: "key-2",
+            value: "value-2"
+          }
+        ],
+        context: "ccc"
+      };
+      process.env.__OW_API_KEY = "test";
+      process.env.__redis_client = "fakeredis";
+
+      let result = action(params);
+      result.should.eventually.deep.equal({
+        items: [{
+            key: params.items[0].key,
+            value: params.items[0].value
+          },
+          {
+            key: params.items[1].key,
+            value: params.items[1].value
+          }
+        ],
+        context: "ccc"
+      }).notify(done);
+    });
+
+  });
+
   describe('with a complex value', () => {
 
     it('should save the complex value correctly', (done) => {
@@ -106,7 +175,6 @@ describe('RedisCache', () => {
       result.should.eventually.deep.equal({
         key: params.key,
         value: params.value,
-        context: null
       }).notify(done);
     });
 
@@ -125,7 +193,6 @@ describe('RedisCache', () => {
           "one": "1",
           "two": "2"
         },
-        context:  null
       }).notify(done);
     });
 
@@ -143,8 +210,7 @@ describe('RedisCache', () => {
         key: params.key,
         value: {
           "one": "1"
-        },
-        context: null
+        }
       }).notify(done);
     });
 
@@ -164,8 +230,7 @@ describe('RedisCache', () => {
           "one": "1",
           "two": "2",
           "three": null
-        },
-        context: null
+        }
       }).notify(done);
     });
 
@@ -185,8 +250,7 @@ describe('RedisCache', () => {
       let result = action(params);
       result.should.eventually.deep.equal({
         key: params.key,
-        value: null,
-        context: null
+        value: null
       }).notify(done);
     });
 
@@ -195,8 +259,7 @@ describe('RedisCache', () => {
   describe('(negative) with a missing required parameter', () => {
 
     it('like redis_host, should return null', (done) => {
-      let params = {
-      };
+      let params = {};
       process.env.__OW_API_KEY = "test";
       process.env.__redis_client = "fakeredis";
 

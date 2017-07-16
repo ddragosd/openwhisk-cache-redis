@@ -1,6 +1,6 @@
 {
   "name": "openwhisk-cache-redis",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "An Openwhisk action exposing a cache interface with Redis",
   "main": "./src/action/rediscache.js",
   "scripts": {

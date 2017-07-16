@@ -14,77 +14,82 @@ function _fail_on_missing(param_name, params, reject) {
   }
 }
 
-function _set_handler(params, resolve, reject, redis_client) {
-  let key = params.key;
-  let value = params.value;
-  if (typeof(value) == "string" || typeof(value) == "number" || typeof(value) == "boolean") {
-    // wrap the value into an object to be used with hmset
-    value = {
-      [DEFAULT_FIELD]: value.toString()
-    }
-  }
+function _set_handler(params, redis_client) {
+  return new Promise(
+    (resolve, reject) => {
+      let key = params.key;
+      let value = params.value;
+      if (typeof(value) == "string" || typeof(value) == "number" || typeof(value) == "boolean") {
+        // wrap the value into an object to be used with hmset
+        value = {
+          [DEFAULT_FIELD]: value.toString()
+        }
+      }
 
-  redis_client.hmset(key, value, (err, response) => {
-    if (err !== null && typeof(err) !== "undefined") {
-      console.error(err);
-      reject({
-        error: err.toString(),
-        type: "redis_hmset"
-      })
+      redis_client.hmset(key, value, (err, response) => {
+        if (err !== null && typeof(err) !== "undefined") {
+          console.error(err);
+          reject({
+            error: err.toString(),
+            type: "redis_hmset"
+          })
+        }
+        console.log("Redis response:" + response);
+        resolve({
+          key: key,
+          value: params.value
+        })
+      });
     }
-    console.log("Redis response:" + response);
-    resolve({
-      key: key,
-      value: params.value,
-      context: params.context || null
-    })
-  });
-  // TODO: what if value is an array ?
+  );
 }
 
-function _get_handler(params, resolve, reject, redis_client) {
-  let key = params.key;
-  let value = params.value;
-  const get_redis_handler = (err, response) => {
-    if (err !== null && typeof(err) !== "undefined") {
-      console.error(err);
-      reject({
-        error: err.toString(),
-        type: "redis_hmget"
-      })
-    }
-    console.log("Redis response:" + JSON.stringify(response));
+function _get_handler(params, redis_client) {
+  return new Promise(
+    (resolve, reject) => {
+      let key = params.key;
+      let value = params.value;
+      const get_redis_handler = (err, response) => {
+        if (err !== null && typeof(err) !== "undefined") {
+          console.error(err);
+          reject({
+            error: err.toString(),
+            type: "redis_hmget"
+          })
+        }
+        console.log("Redis response:" + JSON.stringify(response));
 
-    // if the response is an array and params.fields is not null, match fields with response
-    if (response !== null && response.constructor == Array) {
-      let fields_array = params.fields.split(",");
-      let response_object = {}
-      for (var i=0; i<fields_array.length; i++) {
-        response_object[fields_array[i]] = response[i];
+        // if the response is an array and params.fields is not null, match fields with response
+        if (response !== null && response.constructor == Array) {
+          let fields_array = params.fields.split(",");
+          let response_object = {}
+          for (var i = 0; i < fields_array.length; i++) {
+            response_object[fields_array[i]] = response[i];
+          }
+          response = response_object;
+        }
+
+        // response is null when the key is missing
+
+        if (response !== null && typeof(response) == "object") {
+          if (response[DEFAULT_FIELD] !== null && typeof(response[DEFAULT_FIELD]) !== "undefined") {
+            response = response[DEFAULT_FIELD];
+          }
+        }
+
+        resolve({
+          key: key,
+          value: response
+        });
       }
-      response = response_object;
-    }
 
-    // response is null when the key is missing
-
-    if (response !== null && typeof(response) == "object") {
-      if (response[DEFAULT_FIELD] !== null && typeof(response[DEFAULT_FIELD]) !== "undefined") {
-        response = response[DEFAULT_FIELD];
+      if (params.fields == null) {
+        redis_client.hgetall(key, get_redis_handler);
+      } else {
+        redis_client.hmget(key, params.fields.split(","), get_redis_handler);
       }
     }
-
-    resolve({
-      key: key,
-      value: response,
-      context: params.context || null
-    });
-  }
-
-  if (params.fields == null) {
-    redis_client.hgetall(key, get_redis_handler);
-  } else {
-    redis_client.hmget(key, params.fields.split(","), get_redis_handler);
-  }
+  );
 }
 
 /**
@@ -94,7 +99,8 @@ function _get_handler(params, resolve, reject, redis_client) {
  */
 function main(params) {
   return new Promise((resolve, reject) => {
-    if (_fail_on_missing("redis_host", params, reject) || _fail_on_missing("key", params, reject) ) {
+    if (_fail_on_missing("redis_host", params, reject) ||
+      (params.items == null && _fail_on_missing("key", params, reject))) {
       return;
     }
 
@@ -116,14 +122,46 @@ function main(params) {
       });
     });
 
-    if (params.value !== null && typeof(params.value) !== "undefined") {
-      _set_handler(params, resolve, reject, redis_client);
-      // TODO: handle timeouts
-      return;
+    if (params.items === null || typeof(params.items) === "undefined") {
+      params.items = [{
+        key: params.key,
+        value: params.value,
+        fields: params.fields
+      }];
     }
-    // GET values from cache
-    console.log("GET key:" + params.key);
-    _get_handler(params, resolve, reject, redis_client);
+
+    let redis_ops = []; // an array with all Redis operations
+    let item;
+    for (var i = 0; i < params.items.length; i++) {
+      item = params.items[i];
+      if (item.value !== null && typeof(item.value) !== "undefined") {
+        redis_ops.push(_set_handler(item, redis_client));
+        continue;
+      }
+      // GET values from cache
+      console.log("GET key:" + item.key);
+      redis_ops.push(_get_handler(item, redis_client));
+    }
+    console.log("Executing " + redis_ops.length + " operations.");
+    Promise.all(redis_ops)
+      .then(results => {
+        console.log("results:" + JSON.stringify(results));
+        let r = {
+          items: results
+        };
+        if (results.length == 1) {
+          r = results[0];
+        }
+        if ( params.context !== null && typeof(params.context) !== "undefined") {
+          r.context = params.context;
+        }
+        resolve(r);
+      })
+      .catch(error => {
+        reject(error);
+      });
+
+
   });
 }
 
