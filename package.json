@@ -1,6 +1,6 @@
 {
   "name": "openwhisk-cache-redis",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "An Openwhisk action exposing a cache interface with Redis",
   "main": "./src/action/rediscache.js",
   "scripts": {
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com:ddragosd/experimental-openwhisk-cache-redis.git"
+    "url": "https://github.com/ddragosd/openwhisk-cache-redis"
   },
   "author": "Dragos Dascalita Haut <ddragosd@gmail.com>",
   "license": "Apache-2.0",
@@ -63,9 +63,9 @@
     ]
   },
   "bugs": {
-    "url": "https://github.com/ddragosd/experimental-openwhisk-cache-redis/issues"
+    "url": "https://github.com/ddragosd/openwhisk-cache-redis/issues"
   },
-  "homepage": "https://github.com/ddragosd/experimental-openwhisk-cache-redis",
+  "homepage": "https://github.com/ddragosd/openwhisk-cache-redis",
   "keywords": [
     "serverless, openwhisk, authentication, passportjs"
   ]
