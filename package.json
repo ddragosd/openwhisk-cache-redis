@@ -12,9 +12,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://git.corp.adobe.com/bladerunner/experimental-openwhisk-cache-redis.git"
+    "url": "git://github.com:ddragosd/experimental-openwhisk-cache-redis.git"
   },
-  "author": "Dragos Dascalita Haut <ddascal@adobe.com>",
+  "author": "Dragos Dascalita Haut <ddragosd@gmail.com>",
   "license": "Apache-2.0",
   "dependencies": {
     "hiredis": "^0.5.0",
@@ -63,9 +63,9 @@
     ]
   },
   "bugs": {
-    "url": "https:///git.corp.adobe.com/bladerunner/experimental-openwhisk-cache-redis/issues"
+    "url": "https://github.com/ddragosd/experimental-openwhisk-cache-redis/issues"
   },
-  "homepage": "https:///git.corp.adobe.com/bladerunner/experimental-openwhisk-cache-redis",
+  "homepage": "https://github.com/ddragosd/experimental-openwhisk-cache-redis",
   "keywords": [
     "serverless, openwhisk, authentication, passportjs"
   ]
